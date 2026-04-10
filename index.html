@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Tracker — Music & Brand Consumer Comms</title>
+  <style>
+    :root {
+      --bg:           #0E0E0E;
+      --bg-panel:     #161616;
+      --bg-input:     #1C1C1C;
+      --bg-hover:     #222;
+      --border:       #282828;
+      --border-mid:   #333;
+      --green:        #1DB954;
+      --green-dim:    rgba(29,185,84,0.12);
+      --green-glow:   rgba(29,185,84,0.25);
+      --green-border: rgba(29,185,84,0.4);
+      --amber:        #F4A232;
+      --amber-dim:    rgba(244,162,50,0.12);
+      --amber-border: rgba(244,162,50,0.35);
+      --red:          #E5534B;
+      --red-dim:      rgba(229,83,75,0.12);
+      --text:         #EBEBEB;
+      --text-2:       #A0A0A0;
+      --text-3:       #5A5A5A;
+      --text-4:       #3A3A3A;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+      /* subtle dot grid */
+      background-image: radial-gradient(circle, #252525 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* ── Header ──────────────────────────────── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(14,14,14,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      gap: 16px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .app-wordmark {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+
+    .app-wordmark em {
+      font-style: normal;
+      color: var(--green);
+    }
+
+    .header-divider {
+      width: 1px;
+      height: 14px;
+      background: var(--border-mid);
+    }
+
+    .app-sub {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    .btn-setup {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+      background: none;
+      border: 1px solid var(--border-mid);
+      border-radius: 20px;
+      padding: 5px 14px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .btn-setup:hover { color: var(--green); border-color: var(--green-border); }
+
+    /* ── Config warning ──────────────────────── */
+    .config-warn {
+      display: none;
+      background: var(--amber-dim);
+      border-bottom: 1px solid var(--amber-border);
+      padding: 10px 28px;
+      font-size: 12.5px;
+      color: var(--amber);
+      gap: 8px;
+      align-items: center;
+    }
+    .config-warn.on { display: flex; }
+
+    /* ── Setup drawer ────────────────────────── */
+    .setup-drawer {
+      display: none;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 28px 28px;
+    }
+    .setup-drawer.on { display: block; }
+
+    .setup-drawer h3 {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 18px;
+    }
+
+    .setup-steps { list-style: none; counter-reset: step; }
+
+    .setup-steps li {
+      counter-increment: step;
+      position: relative;
+      padding: 10px 0 10px 34px;
+      font-size: 13px;
+      color: var(--text-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .setup-steps li:last-child { border-bottom: none; }
+
+    .setup-steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0; top: 10px;
+      width: 20px; height: 20px;
+      background: var(--green-dim);
+      color: var(--green);
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .setup-steps li strong { color: var(--text); }
+
+    .setup-tip {
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--text-3);
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+
+    /* ── Main layout ─────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      min-height: calc(100vh - 56px);
+    }
+
+    /* ── Form panel ──────────────────────────── */
+    .form-panel {
+      border-right: 1px solid var(--border);
+      padding: 24px 24px 40px;
+      background: var(--bg-panel);
+      overflow-y: auto;
+    }
+
+    .panel-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 20px;
+    }
+
+    .field { margin-bottom: 14px; }
+
+    .field-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 6px;
+    }
+
+    .field-input,
+    .field-select,
+    .field-textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-mid);
+      border-radius: 7px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13.5px;
+      padding: 9px 11px;
+      outline: none;
+      transition: border-color 0.14s, box-shadow 0.14s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .field-input::placeholder { color: var(--text-4); }
+
+    .field-input:focus,
+    .field-select:focus,
+    .field-textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px var(--green-dim);
+    }
+
+    .field-select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='5' viewBox='0 0 10 5'%3E%3Cpath d='M0 0l5 5 5-5z' fill='%235A5A5A'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 11px center;
+      padding-right: 30px;
+    }
+    .field-select option { background: #222; }
+
+    .field-textarea {
+      resize: vertical;
+      min-height: 68px;
+    }
+
+    /* Date field */
+    .tbc-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 8px;
+    }
+    .tbc-cb {
+      width: 14px; height: 14px;
+      accent-color: var(--green);
+      cursor: pointer;
+    }
+    .tbc-cb-label {
+      font-size: 12px;
+      color: var(--text-2);
+      cursor: pointer;
+      user-select: none;
+    }
+    .date-inputs { display: flex; flex-direction: column; gap: 7px; }
+    .end-date-label {
+      font-size: 11px;
+      color: var(--text-3);
+      margin: 2px 0 2px;
+    }
+
+    /* Submit */
+    .btn-submit {
+      width: 100%;
+      background: var(--green);
+      color: #000;
+      border: none;
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+      margin-top: 6px;
+    }
+    .btn-submit:hover:not(:disabled) {
+      background: #21CF60;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--green-glow);
+    }
+    .btn-submit:active:not(:disabled) { transform: translateY(0); }
+    .btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Status bar */
+    .status-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 11px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      margin-top: 9px;
+      animation: fadeUp 0.2s ease;
+    }
+    .status-bar.on { display: flex; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .status-bar.saving {
+      background: rgba(255,255,255,0.04);
+      color: var(--text-2);
+      border: 1px solid var(--border-mid);
+    }
+    .status-bar.ok {
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid var(--green-border);
+    }
+    .status-bar.warn {
+      background: var(--amber-dim);
+      color: var(--amber);
+      border: 1px solid var(--amber-border);
+    }
+    .status-bar.fail {
+      background: var(--red-dim);
+      color: var(--red);
+      border: 1px solid rgba(229,83,75,0.35);
+    }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .saving .status-dot { background: var(--text-3); animation: blink 1s ease infinite; }
+    .ok   .status-dot { background: var(--green); }
+    .warn .status-dot { background: var(--amber); }
+    .fail .status-dot { background: var(--red); }
+
+    @keyframes blink {
+      0%,100% { opacity:1; } 50% { opacity:0.2; }
+    }
+
+    /* ── List panel ──────────────────────────── */
+    .list-panel { padding: 24px 28px 48px; overflow-y: auto; }
+
+    .list-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    /* Retry banner */
+    .retry-banner {
+      display: none;
+      background: var(--amber-dim);
+      border: 1px solid var(--amber-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12.5px;
+      color: var(--amber);
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .retry-banner.on { display: flex; }
+
+    .btn-retry {
+      font-family: inherit;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--amber);
+      background: none;
+      border: 1px solid var(--amber-border);
+      border-radius: 5px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: background 0.13s;
+      white-space: nowrap;
+    }
+    .btn-retry:hover { background: rgba(244,162,50,0.1); }
+
+    /* Empty */
+    .empty {
+      text-align: center;
+      padding: 72px 24px;
+      color: var(--text-3);
+    }
+    .empty-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.5; }
+    .empty-text { font-size: 13px; }
+
+    /* Month group */
+    .month-group { margin-bottom: 8px; }
+
+    .month-group details {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .month-group details[open] { border-color: var(--border-mid); }
+
+    .month-summary {
+      list-style: none;
+      padding: 11px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-panel);
+      user-select: none;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--text-2);
+      transition: color 0.13s, background 0.13s;
+    }
+    .month-summary::-webkit-details-marker { display: none; }
+    .month-summary:hover { color: var(--text); background: var(--bg-hover); }
+    details[open] .month-summary { color: var(--text); border-bottom: 1px solid var(--border); }
+
+    .month-label-wrap { display: flex; align-items: center; gap: 8px; }
+
+    .month-pill {
+      background: var(--bg-hover);
+      border-radius: 10px;
+      padding: 1px 7px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-3);
+    }
+
+    .month-chevron {
+      font-size: 9px;
+      color: var(--text-3);
+      transition: transform 0.2s;
+    }
+    details[open] .month-chevron { transform: rotate(180deg); }
+
+    /* Project rows */
+    .proj-list { padding: 4px 6px 6px; }
+
+    .proj-row {
+      padding: 10px 8px;
+      border-radius: 6px;
+      transition: background 0.12s;
+      cursor: default;
+    }
+    .proj-row:hover { background: rgba(255,255,255,0.03); }
+    .proj-row + .proj-row { border-top: 1px solid var(--border); }
+
+    .proj-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 5px;
+      line-height: 1.35;
+    }
+
+    .proj-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .chip {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 4px;
+      line-height: 1.6;
+    }
+
+    /* DRI chips */
+    .ch-Erika   { background: rgba(123,79,158,0.2);  color: #C39EE0; }
+    .ch-Ivana   { background: rgba(30,110,158,0.2);  color: #78C2E8; }
+    .ch-Shai    { background: rgba(158,107,30,0.2);  color: #E4B267; }
+    .ch-Adam    { background: rgba(30,158,94,0.2);   color: #5DDBA7; }
+    .ch-Anthony { background: rgba(158,46,46,0.2);   color: #E07A7A; }
+
+    /* Team chips */
+    .ch-Music  { background: rgba(29,185,84,0.13);  color: #1DB954; }
+    .ch-Brand  { background: rgba(233,30,140,0.13); color: #F06DB4; }
+    .ch-Trends { background: rgba(255,107,43,0.13); color: #FF8C5E; }
+
+    /* Support chips */
+    .ch-FULL    { background: rgba(29,185,84,0.13); color: var(--green); }
+    .ch-Advising { background: rgba(255,255,255,0.07); color: var(--text-2); }
+
+    /* Unsynced chip */
+    .ch-unsynced {
+      background: var(--amber-dim);
+      color: var(--amber);
+      border: 1px solid var(--amber-border);
+    }
+
+    .proj-meta {
+      font-size: 11.5px;
+      color: var(--text-3);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .proj-notes {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-top: 5px;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .proj-notes.exp {
+      display: block;
+      -webkit-line-clamp: unset;
+    }
+
+    /* ── Import button ───────────────────────── */
+    .btn-import {
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text-2);
+      background: none;
+      border: 1px solid var(--border-mid);
+      border-radius: 7px;
+      padding: 5px 11px;
+      cursor: pointer;
+      transition: color 0.13s, border-color 0.13s, background 0.13s;
+      white-space: nowrap;
+    }
+    .btn-import:hover:not(:disabled) { color: var(--green); border-color: var(--green-border); }
+    .btn-import:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── View toggle (left panel) ───────────── */
+    .view-toggle {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+    .view-btn {
+      flex: 1;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text-3);
+      background: var(--bg-input);
+      border: 1px solid var(--border-mid);
+      border-radius: 7px;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: color 0.13s, background 0.13s, border-color 0.13s;
+      text-align: center;
+    }
+    .view-btn:hover { color: var(--text-2); }
+    .view-btn.active {
+      background: var(--bg-hover);
+      border-color: var(--green-border);
+      color: var(--green);
+    }
+
+    /* ── Calendar ────────────────────────────── */
+    .cal-view { display: none; }
+    .cal-view.on { display: block; }
+
+    .cal-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .cal-month-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.2px;
+    }
+    .cal-nav-btn {
+      font-family: inherit;
+      font-size: 18px;
+      line-height: 1;
+      color: var(--text-2);
+      background: none;
+      border: 1px solid var(--border-mid);
+      border-radius: 6px;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: color 0.13s, border-color 0.13s;
+    }
+    .cal-nav-btn:hover { color: var(--text); border-color: var(--text-3); }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      margin-bottom: 16px;
+    }
+
+    .cal-dow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      text-align: center;
+      padding: 2px 0 7px;
+    }
+
+    .cal-day {
+      min-height: 110px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 5px 5px;
+      vertical-align: top;
+    }
+    .cal-day.filler {
+      background: transparent;
+      border-color: transparent;
+      min-height: 0;
+    }
+    .cal-day.today {
+      border-color: var(--green-border);
+      background: rgba(29,185,84,0.06);
+    }
+
+    .cal-day-num {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-align: right;
+      padding-right: 2px;
+      margin-bottom: 5px;
+    }
+    .cal-day.today .cal-day-num { color: var(--green); }
+
+    /* Project card inside a calendar day */
+    .cal-card {
+      border-radius: 5px;
+      padding: 5px 6px;
+      margin-bottom: 4px;
+      cursor: default;
+    }
+    .cal-card:hover { opacity: 0.9; }
+
+    .cal-card.ce-Erika   { background: rgba(123,79,158,0.2);  border-left: 2px solid #7B4F9E; }
+    .cal-card.ce-Ivana   { background: rgba(30,110,158,0.2);  border-left: 2px solid #1E6E9E; }
+    .cal-card.ce-Shai    { background: rgba(158,107,30,0.2);  border-left: 2px solid #9E6B1E; }
+    .cal-card.ce-Adam    { background: rgba(30,158,94,0.2);   border-left: 2px solid #1E9E5E; }
+    .cal-card.ce-Anthony { background: rgba(158,46,46,0.2);   border-left: 2px solid #9E2E2E; }
+    .cal-card.ce-none    { background: rgba(255,255,255,0.06); border-left: 2px solid #444; }
+
+    .cal-card-name {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+      margin-bottom: 4px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .cal-card-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+
+    .cal-chip {
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 1px 5px;
+      border-radius: 3px;
+      line-height: 1.5;
+    }
+
+    .cal-overflow {
+      font-size: 9px;
+      color: var(--text-3);
+      padding: 2px 3px;
+      display: block;
+    }
+
+    /* TBC section */
+    .cal-tbc {
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+    .cal-tbc-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 8px;
+    }
+    .cal-tbc-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      color: var(--text-2);
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cal-tbc-row:last-child { border-bottom: none; }
+
+    /* ── Responsive ───────────────────────────── */
+    @media (max-width: 760px) {
+      .layout { grid-template-columns: 1fr; }
+      .form-panel { border-right: none; border-bottom: 1px solid var(--border); }
+      .header { padding: 0 16px; }
+      .app-sub { display: none; }
+      .header-divider { display: none; }
+      .form-panel { padding: 20px 16px 32px; }
+      .list-panel { padding: 20px 16px 40px; }
+      .setup-drawer { padding: 18px 16px 22px; }
+      .config-warn { padding: 10px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── Header ─────────────────────────── -->
+  <header class="header">
+    <div class="header-left">
+      <span class="app-wordmark">Project <em>Tracker</em></span>
+      <div class="header-divider"></div>
+      <span class="app-sub">Music &amp; Brand Consumer Comms</span>
+    </div>
+    <button class="btn-setup" onclick="toggleSetup(this)">⚙ Setup</button>
+  </header>
+
+  <!-- ─── Config warning ─────────────────── -->
+  <div class="config-warn" id="cfgWarn">
+    <span>⚠</span>
+    <span>Google Sheets sync is not configured — entries will be saved locally only. Click <strong>Setup</strong> above to connect your sheet.</span>
+  </div>
+
+  <!-- ─── Setup drawer ───────────────────── -->
+  <div class="setup-drawer" id="setupDrawer">
+    <h3>Connecting to Google Sheets</h3>
+    <ol class="setup-steps">
+      <li><strong>Open your Google Sheet.</strong> In the top menu, click <strong>Extensions</strong>, then <strong>Apps Script</strong>. A new tab will open with a code editor.</li>
+      <li>In the code editor, <strong>delete all existing code</strong>, then paste in the code from the <strong>apps-script.gs</strong> file included with this app. Click the save icon (or press ⌘S).</li>
+      <li>Click <strong>Deploy</strong> (top-right button) → <strong>New deployment</strong>. Click the small gear icon next to "Select type" and choose <strong>Web app</strong>.</li>
+      <li>Under <strong>"Execute as"</strong> choose <strong>Me</strong>. Under <strong>"Who has access"</strong> choose <strong>Anyone</strong>. Click <strong>Deploy</strong> and accept any permission prompts that appear.</li>
+      <li><strong>Copy the URL</strong> shown (it starts with <code>https://script.google.com/macros/s/...</code>).</li>
+      <li>Open <strong>index.html</strong> in a text editor (right-click → Open With → TextEdit on Mac, or Notepad on Windows). Find the line that says <strong>PASTE_YOUR_URL_HERE</strong> and replace it — including the quotes — with your URL. Save the file and reload it in your browser.</li>
+    </ol>
+    <div class="setup-tip">💡 Once configured, you can share the <strong>index.html</strong> file with your team via Google Drive. Each person does step 6 once with the same URL and is good to go.</div>
+  </div>
+
+  <!-- ─── Main layout ────────────────────── -->
+  <div class="layout">
+
+    <!-- Form panel -->
+    <div class="form-panel">
+      <div class="view-toggle">
+        <button class="view-btn active" id="btnList" onclick="switchView('list')">☰ List View</button>
+        <button class="view-btn" id="btnCal" onclick="switchView('cal')">▦ Calendar</button>
+      </div>
+      <div class="panel-label" id="formLabel">Add Project</div>
+
+      <form id="projectForm" onsubmit="handleSubmit(event)" novalidate>
+
+        <div class="field">
+          <label class="field-label" for="fProject">Project</label>
+          <input class="field-input" type="text" id="fProject" placeholder="Project name" autocomplete="off" required>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="fDri">DRI</label>
+          <select class="field-select" id="fDri">
+            <option value="">— Select person —</option>
+            <option>Erika</option>
+            <option>Ivana</option>
+            <option>Shai</option>
+            <option>Adam</option>
+            <option>Anthony</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="fTeam">Team</label>
+          <select class="field-select" id="fTeam">
+            <option value="">— Select team —</option>
+            <option>Music</option>
+            <option>Brand</option>
+            <option>Trends</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Date</label>
+          <div class="tbc-row">
+            <input class="tbc-cb" type="checkbox" id="fTbc" onchange="toggleTBC()">
+            <label class="tbc-cb-label" for="fTbc">TBC — date not yet confirmed</label>
+          </div>
+          <div class="date-inputs" id="dateInputs">
+            <input class="field-input" type="date" id="fDate">
+            <div class="end-date-label">End date (optional, for multi-day projects)</div>
+            <input class="field-input" type="date" id="fDateEnd">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="fSupport">Support Level</label>
+          <select class="field-select" id="fSupport">
+            <option value="">— Select support —</option>
+            <option value="FULL">FULL</option>
+            <option value="Advising Only">Advising Only</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="fNotes">Materials / Notes</label>
+          <textarea class="field-textarea" id="fNotes" placeholder="Links, notes, context…"></textarea>
+        </div>
+
+        <button class="btn-submit" type="submit" id="submitBtn">Add Project</button>
+
+        <div class="status-bar" id="statusBar">
+          <div class="status-dot"></div>
+          <span id="statusText"></span>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- List panel -->
+    <div class="list-panel">
+      <div class="list-top">
+        <div class="panel-label">All Projects</div>
+        <button class="btn-import" id="importBtn" onclick="importFromSheet()">↓ Import from Sheet</button>
+      </div>
+
+      <div class="retry-banner" id="retryBanner">
+        <span>Some entries haven't synced to Google Sheets yet.</span>
+        <button class="btn-retry" id="retryBtn" onclick="retrySync()">Retry Sync</button>
+      </div>
+
+      <div id="projectsList"></div>
+
+      <!-- Calendar view -->
+      <div class="cal-view" id="calView">
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
+          <span class="cal-month-label" id="calMonthLabel"></span>
+          <button class="cal-nav-btn" onclick="calNav(1)">›</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div id="calTBC"></div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+// ─────────────────────────────────────────────
+//  SETUP: Paste your Google Apps Script URL below.
+//  It looks like: https://script.google.com/macros/s/.../exec
+// ─────────────────────────────────────────────
+const APPS_SCRIPT_URL = "PASTE_YOUR_URL_HERE";
+
+// ─── Storage ──────────────────────────────────
+const STORAGE_KEY = "projects_v1";
+
+function loadProjects() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+  catch { return []; }
+}
+
+function saveProjects(p) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+}
+
+function addProject(project) {
+  const list = loadProjects();
+  list.push(project);
+  saveProjects(list);
+}
+
+function markSynced(id, synced) {
+  const list = loadProjects();
+  const p = list.find(x => x.id === id);
+  if (p) { p.synced = synced; saveProjects(list); }
+}
+
+// ─── Date helpers ─────────────────────────────
+const MO = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function parseISO(s) {
+  if (!s || s === "TBC") return null;
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function fmtDisplay(date, dateEnd) {
+  if (!date || date === "TBC") return "TBC";
+  const d = parseISO(date);
+  if (!d) return date;
+  const start = `${MO[d.getMonth()]} ${d.getDate()}`;
+  if (dateEnd) {
+    const de = parseISO(dateEnd);
+    if (de) {
+      const sameMonth = de.getMonth() === d.getMonth() && de.getFullYear() === d.getFullYear();
+      return sameMonth
+        ? `${start}–${de.getDate()}`
+        : `${start} – ${MO[de.getMonth()]} ${de.getDate()}`;
+    }
+  }
+  return start;
+}
+
+function monthKey(date) {
+  if (!date || date === "TBC") return "9999-99";
+  const d = parseISO(date);
+  if (!d) return "9999-99";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthLabel(key) {
+  if (key === "9999-99") return "Upcoming / TBC";
+  const [y, m] = key.split("-");
+  return `${MO[parseInt(m) - 1]} ${y}`;
+}
+
+function nowKey() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}`;
+}
+
+// ─── Google Sheets sync ───────────────────────
+async function syncToSheets(project) {
+  if (APPS_SCRIPT_URL === "PASTE_YOUR_URL_HERE") return { ok: false, noUrl: true };
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(project),
+    });
+    if (res.ok || res.type === "opaque") return { ok: true };
+    return { ok: false };
+  } catch {
+    // CORS fallback — sends data but can't confirm receipt
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(project),
+      });
+      return { ok: true, assumed: true };
+    } catch {
+      return { ok: false };
+    }
+  }
+}
+
+// ─── Form helpers ─────────────────────────────
+function toggleTBC() {
+  const on = document.getElementById("fTbc").checked;
+  const wrap = document.getElementById("dateInputs");
+  wrap.style.opacity = on ? "0.35" : "1";
+  wrap.style.pointerEvents = on ? "none" : "auto";
+}
+
+function setStatus(type, msg) {
+  const bar = document.getElementById("statusBar");
+  bar.className = "status-bar on " + type;
+  document.getElementById("statusText").textContent = msg;
+}
+
+function clearStatus() {
+  document.getElementById("statusBar").className = "status-bar";
+}
+
+// ─── Submit ───────────────────────────────────
+async function handleSubmit(e) {
+  e.preventDefault();
+
+  const name = document.getElementById("fProject").value.trim();
+  if (!name) {
+    document.getElementById("fProject").focus();
+    return;
+  }
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  const isTBC = document.getElementById("fTbc").checked;
+
+  const project = {
+    id:      crypto.randomUUID(),
+    project: name,
+    dri:     document.getElementById("fDri").value,
+    team:    document.getElementById("fTeam").value,
+    date:    isTBC ? "TBC" : document.getElementById("fDate").value,
+    dateEnd: isTBC ? "" : document.getElementById("fDateEnd").value,
+    support: document.getElementById("fSupport").value,
+    notes:   document.getElementById("fNotes").value.trim(),
+    savedAt: new Date().toISOString(),
+    synced:  false,
+  };
+
+  addProject(project);
+  renderList();
+  setStatus("saving", "Saving to Google Sheets…");
+
+  if (project.date !== "TBC" || APPS_SCRIPT_URL !== "PASTE_YOUR_URL_HERE") {
+    if (APPS_SCRIPT_URL === "PASTE_YOUR_URL_HERE") {
+      setStatus("warn", "Saved locally. Connect Google Sheets in Setup to sync.");
+    } else {
+      const result = await syncToSheets(project);
+      if (result.ok) {
+        markSynced(project.id, true);
+        renderList();
+        setStatus("ok", result.assumed
+          ? "Sent to sheet (unconfirmed — no-cors mode). Saved locally."
+          : "Saved to Google Sheet and local backup.");
+      } else {
+        setStatus("warn", "Saved locally. Sheet sync failed — check your URL in Setup.");
+      }
+    }
+  } else {
+    setStatus("warn", "Saved locally. Connect Google Sheets in Setup to sync.");
+  }
+
+  e.target.reset();
+  document.getElementById("dateInputs").style.opacity = "1";
+  document.getElementById("dateInputs").style.pointerEvents = "auto";
+  btn.disabled = false;
+  setTimeout(clearStatus, 5500);
+}
+
+// ─── Retry sync ───────────────────────────────
+async function retrySync() {
+  const btn = document.getElementById("retryBtn");
+  btn.textContent = "Syncing…";
+  btn.disabled = true;
+
+  const list = loadProjects();
+  for (const p of list.filter(x => !x.synced)) {
+    const r = await syncToSheets(p);
+    if (r.ok) markSynced(p.id, true);
+  }
+
+  renderList();
+  btn.textContent = "Retry Sync";
+  btn.disabled = false;
+}
+
+// ─── Render ───────────────────────────────────
+function esc(s) {
+  return String(s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function renderList() {
+  const projects = loadProjects();
+  const container = document.getElementById("projectsList");
+  const banner = document.getElementById("retryBanner");
+
+  banner.className = projects.some(p => !p.synced) ? "retry-banner on" : "retry-banner";
+  if (currentView === "cal") renderCalendar();
+
+  if (!projects.length) {
+    container.innerHTML = `<div class="empty">
+      <div class="empty-icon">♩</div>
+      <div class="empty-text">No projects yet — add the first one!</div>
+    </div>`;
+    return;
+  }
+
+  // Group
+  const groups = {};
+  for (const p of projects) {
+    const k = monthKey(p.date);
+    (groups[k] = groups[k] || []).push(p);
+  }
+
+  const sortedKeys = Object.keys(groups).sort();
+  const curKey = nowKey();
+
+  container.innerHTML = sortedKeys.map(k => {
+    const items = [...groups[k]].sort((a, b) => {
+      if (!a.date || a.date === "TBC") return 1;
+      if (!b.date || b.date === "TBC") return -1;
+      return a.date.localeCompare(b.date);
+    });
+    const open = k === curKey || k === sortedKeys[0];
+    const rows = items.map(renderRow).join("");
+
+    return `<div class="month-group">
+      <details${open ? " open" : ""}>
+        <summary class="month-summary">
+          <div class="month-label-wrap">
+            <span>${monthLabel(k)}</span>
+            <span class="month-pill">${items.length}</span>
+          </div>
+          <span class="month-chevron">▼</span>
+        </summary>
+        <div class="proj-list">${rows}</div>
+      </details>
+    </div>`;
+  }).join("");
+}
+
+function renderRow(p) {
+  const dateStr = fmtDisplay(p.date, p.dateEnd);
+
+  const driChip     = p.dri     ? `<span class="chip ch-${esc(p.dri)}">${esc(p.dri)}</span>` : "";
+  const teamChip    = p.team    ? `<span class="chip ch-${esc(p.team)}">${esc(p.team)}</span>` : "";
+  const supClass    = p.support === "FULL" ? "ch-FULL" : "ch-Advising";
+  const supportChip = p.support ? `<span class="chip ${supClass}">${esc(p.support)}</span>` : "";
+  const unsyncChip  = !p.synced ? `<span class="chip ch-unsynced">Unsynced</span>` : "";
+  const notesHtml   = p.notes
+    ? `<div class="proj-notes" onclick="this.classList.toggle('exp')" title="Click to expand">${esc(p.notes)}</div>`
+    : "";
+
+  return `<div class="proj-row">
+    <div class="proj-meta"><span>${dateStr}</span></div>
+    <div class="proj-name">${esc(p.project)}</div>
+    <div class="proj-chips">${driChip}${teamChip}${supportChip}${unsyncChip}</div>
+    ${notesHtml}
+  </div>`;
+}
+
+// ─── Import from Sheet ────────────────────────
+async function importFromSheet() {
+  if (APPS_SCRIPT_URL === "PASTE_YOUR_URL_HERE") {
+    alert("Connect Google Sheets first — click Setup in the top-right corner.");
+    return;
+  }
+
+  const btn = document.getElementById("importBtn");
+  btn.disabled = true;
+  btn.textContent = "Importing…";
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL + "?action=import");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+
+    if (data.status === "error") throw new Error(data.message);
+
+    const incoming = data.projects || [];
+    if (!incoming.length) {
+      btn.textContent = "↓ Import from Sheet";
+      btn.disabled = false;
+      alert("No projects found in the sheet.");
+      return;
+    }
+
+    // Merge: skip rows that look identical (same project name + date)
+    const existing = loadProjects();
+    const existingKeys = new Set(existing.map(p => (p.project + "|" + p.date).toLowerCase()));
+
+    let added = 0;
+    for (const p of incoming) {
+      const key = (p.project + "|" + p.date).toLowerCase();
+      if (!existingKeys.has(key)) {
+        existing.push(p);
+        added++;
+      }
+    }
+
+    saveProjects(existing);
+    renderList();
+    if (currentView === "cal") renderCalendar();
+
+    btn.textContent = "↓ Import from Sheet";
+    btn.disabled = false;
+    alert(`Import complete — ${added} new project${added !== 1 ? "s" : ""} added (${incoming.length - added} already existed).`);
+
+  } catch (err) {
+    btn.textContent = "↓ Import from Sheet";
+    btn.disabled = false;
+    alert("Import failed: " + err.message + "\n\nMake sure you've re-deployed the Apps Script after the latest update (Deploy → Manage deployments → update).");
+  }
+}
+
+// ─── View switching ───────────────────────────
+let currentView = "list";
+let calYear, calMonth;
+
+function switchView(v) {
+  currentView = v;
+  document.getElementById("projectsList").style.display = v === "list" ? "" : "none";
+  document.getElementById("calView").className = v === "cal" ? "cal-view on" : "cal-view";
+  document.getElementById("btnList").className = v === "list" ? "view-btn active" : "view-btn";
+  document.getElementById("btnCal").className  = v === "cal"  ? "view-btn active" : "view-btn";
+  if (v === "cal") renderCalendar();
+}
+
+function calNav(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const projects = loadProjects();
+  const y = calYear, m = calMonth;
+
+  document.getElementById("calMonthLabel").textContent = `${MO[m]} ${y}`;
+
+  // Build a map: "YYYY-MM-DD" → [project, ...]
+  const byDay = {};
+  const tbcList = [];
+
+  for (const p of projects) {
+    if (!p.date || p.date === "TBC") {
+      tbcList.push(p);
+      continue;
+    }
+    const d = parseISO(p.date);
+    if (!d) continue;
+
+    // If project is in this month, add to its start date cell
+    if (d.getFullYear() === y && d.getMonth() === m) {
+      const key = p.date;
+      (byDay[key] = byDay[key] || []).push(p);
+    }
+    // Also mark end date if it falls in this month
+    if (p.dateEnd) {
+      const de = parseISO(p.dateEnd);
+      if (de && de.getFullYear() === y && de.getMonth() === m && p.dateEnd !== p.date) {
+        const key = p.dateEnd;
+        // Only add end-date marker if start wasn't in this month
+        if (!d || d.getFullYear() !== y || d.getMonth() !== m) {
+          (byDay[key] = byDay[key] || []).push(p);
+        }
+      }
+    }
+  }
+
+  // Calendar grid
+  const firstDay = new Date(y, m, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+
+  const DOW = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+  let html = DOW.map(d => `<div class="cal-dow">${d}</div>`).join("");
+
+  // Filler cells before the 1st
+  for (let i = 0; i < firstDay; i++) {
+    html += `<div class="cal-day filler"></div>`;
+  }
+
+  // Day cells
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const isToday = key === todayStr;
+    const events = byDay[key] || [];
+    const maxShow = 3;
+
+    let evHtml = "";
+    events.slice(0, maxShow).forEach(p => {
+      const cardCls = p.dri ? `ce-${p.dri}` : "ce-none";
+      const driChip = p.dri
+        ? `<span class="cal-chip ch-${esc(p.dri)}">${esc(p.dri)}</span>` : "";
+      const teamChip = p.team
+        ? `<span class="cal-chip ch-${esc(p.team)}">${esc(p.team)}</span>` : "";
+      evHtml += `<div class="cal-card ${cardCls}" title="${esc(p.project)}">
+        <div class="cal-card-name">${esc(p.project)}</div>
+        <div class="cal-card-chips">${driChip}${teamChip}</div>
+      </div>`;
+    });
+    if (events.length > maxShow) {
+      evHtml += `<span class="cal-overflow">+${events.length - maxShow} more</span>`;
+    }
+
+    html += `<div class="cal-day${isToday ? " today" : ""}">
+      <div class="cal-day-num">${d}</div>
+      ${evHtml}
+    </div>`;
+  }
+
+  document.getElementById("calGrid").innerHTML = html;
+
+  // TBC section
+  const tbcEl = document.getElementById("calTBC");
+  if (tbcList.length) {
+    const rows = tbcList.map(p => {
+      const cls = p.dri ? `ce-${p.dri}` : "ce-none";
+      const driChip = p.dri ? `<span class="chip ch-${esc(p.dri)}">${esc(p.dri)}</span>` : "";
+      return `<div class="cal-tbc-row">${driChip}<span>${esc(p.project)}</span></div>`;
+    }).join("");
+    tbcEl.innerHTML = `<div class="cal-tbc">
+      <div class="cal-tbc-label">Upcoming / TBC</div>
+      <div>${rows}</div>
+    </div>`;
+  } else {
+    tbcEl.innerHTML = "";
+  }
+}
+
+// ─── Setup toggle ─────────────────────────────
+function toggleSetup(btn) {
+  const d = document.getElementById("setupDrawer");
+  const on = d.classList.toggle("on");
+  btn.textContent = on ? "✕ Close" : "⚙ Setup";
+}
+
+// ─── Init ─────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  const now = new Date();
+  calYear  = now.getFullYear();
+  calMonth = now.getMonth();
+
+  if (APPS_SCRIPT_URL === "PASTE_YOUR_URL_HERE") {
+    document.getElementById("cfgWarn").classList.add("on");
+  }
+  renderList();
+});
+</script>
+</body>
+</html>
