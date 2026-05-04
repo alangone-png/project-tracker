@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaign Comparator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #1DB954;
+      --purple: #534AB7;
+      --bg: #f9f9f8;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.1);
+      --text: #1a1a1a;
+      --muted: #666;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo { font-size: 18px; font-weight: 600; color: var(--text); }
+    .logo span { color: var(--green); }
+
+    main { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+
+    h2 { font-size: 16px; font-weight: 600; margin-bottom: 1rem; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* --- INPUT FORM --- */
+    .form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr; gap: 12px; align-items: end; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 12px; color: var(--muted); }
+    .field input {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      transition: border 0.15s;
+    }
+    .field input:focus { border-color: var(--green); }
+
+    .btn {
+      padding: 9px 20px;
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-clear {
+      padding: 9px 16px;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* --- RESULT BANNER --- */
+    #result-banner { display: none; }
+    .banner-inner {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .metric {
+      background: #f4f4f2;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+    }
+    .metric-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .metric-val { font-size: 22px; font-weight: 600; }
+    .metric-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    .badge-above { background: #e6f4ec; color: #0F6E56; }
+    .badge-near  { background: #faeeda; color: #854F0B; }
+    .badge-below { background: #fcebeb; color: #A32D2D; }
+
+    /* --- CHART --- */
+    .chart-section { margin-top: 1.5rem; }
+    .chart-row {
+      display: grid;
+      grid-template-columns: 220px 1fr 70px 90px;
+      gap: 10px;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .chart-row:last-child { border-bottom: none; }
+    .chart-row.header { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+    .chart-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chart-name.is-new { font-weight: 600; color: var(--purple); }
+    .bar-track { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; background: var(--green); transition: width 0.4s ease; }
+    .bar-fill.is-new { background: var(--purple); }
+    .chart-hits { font-size: 13px; text-align: right; color: var(--text); }
+    .chart-online { font-size: 12px; text-align: right; color: var(--muted); }
+    .year-tag { font-size: 11px; color: var(--muted); background: #f0f0ee; padding: 1px 6px; border-radius: 10px; }
+
+    /* --- FULL LIST TABLE --- */
+    .controls { display: flex; gap: 10px; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+    .controls input {
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      width: 220px;
+      outline: none;
+    }
+    .controls input:focus { border-color: var(--green); }
+    .controls select {
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      background: var(--surface);
+      outline: none;
+      cursor: pointer;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      padding: 6px 10px;
+      border-bottom: 2px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    thead th:hover { color: var(--text); }
+    thead th .sort-arrow { margin-left: 4px; opacity: 0.4; }
+    thead th.sorted .sort-arrow { opacity: 1; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    tbody tr:hover { background: #f6f6f4; }
+    tbody tr:last-child { border-bottom: none; }
+    td { padding: 8px 10px; vertical-align: middle; }
+    td.rank { font-size: 12px; color: var(--muted); text-align: center; width: 36px; }
+    td.name { max-width: 240px; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.num.highlight { font-weight: 600; color: var(--text); }
+
+    .mini-bar { height: 4px; background: #eee; border-radius: 2px; margin-top: 3px; overflow: hidden; width: 100%; }
+    .mini-fill { height: 100%; border-radius: 2px; background: var(--green); }
+
+    .tag { display: inline-block; font-size: 11px; color: var(--muted); background: #f0f0ee; padding: 1px 6px; border-radius: 10px; white-space: nowrap; }
+
+    .no-results { text-align: center; color: var(--muted); padding: 2rem; }
+
+    @media (max-width: 700px) {
+      .form-grid { grid-template-columns: 1fr 1fr; }
+      .banner-inner { grid-template-columns: 1fr 1fr 1fr; }
+      .chart-row { grid-template-columns: 140px 1fr 60px; }
+      .chart-online { display: none; }
+      main { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span>Spotify</span> Campaign Comparator</div>
+</header>
+
+<main>
+
+  <!-- COMPARE FORM -->
+  <div class="card">
+    <h2>Compare a new project</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label>Project name</label>
+        <input type="text" id="inp-name" placeholder="e.g. Spotify x Artist X">
+      </div>
+      <div class="field">
+        <label>Total hits</label>
+        <input type="number" id="inp-hits" placeholder="450" min="0">
+      </div>
+      <div class="field">
+        <label>Online hits</label>
+        <input type="number" id="inp-online" placeholder="80" min="0">
+      </div>
+      <div class="field">
+        <label>Social hits</label>
+        <input type="number" id="inp-social" placeholder="120" min="0">
+      </div>
+      <div class="field">
+        <label>Influencer hits</label>
+        <input type="number" id="inp-influencer" placeholder="30" min="0">
+      </div>
+      <div class="field">
+        <label>Total impressions</label>
+        <input type="number" id="inp-imps" placeholder="500000000" min="0">
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:12px;">
+      <button class="btn" onclick="runCompare()">Compare</button>
+      <button class="btn-clear" onclick="clearCompare()">Clear</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="card" id="result-banner">
+    <div style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
+      <h2 style="margin:0;" id="res-title">Project name</h2>
+      <span class="badge" id="res-badge"></span>
+    </div>
+    <div class="banner-inner">
+      <div class="metric">
+        <div class="metric-label">Total hits</div>
+        <div class="metric-val" id="res-hits">—</div>
+        <div class="metric-sub" id="res-hits-sub"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Online hits</div>
+        <div class="metric-val" id="res-online">—</div>
+        <div class="metric-sub" id="res-online-sub"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Social hits</div>
+        <div class="metric-val" id="res-social">—</div>
+        <div class="metric-sub" id="res-social-sub"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Influencer hits</div>
+        <div class="metric-val" id="res-influencer">—</div>
+        <div class="metric-sub" id="res-influencer-sub"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Quality ratio</div>
+        <div class="metric-val" id="res-ratio">—</div>
+        <div class="metric-sub">online ÷ total hits</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Rank vs all projects</div>
+        <div class="metric-val" id="res-rank">—</div>
+        <div class="metric-sub" id="res-rank-sub"></div>
+      </div>
+    </div>
+
+    <div class="chart-section">
+      <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">Top 5 + your project</p>
+      <div class="chart-row header">
+        <div>Project</div><div>Hits</div><div style="text-align:right">Total</div><div style="text-align:right">Online</div>
+      </div>
+      <div id="compare-chart"></div>
+    </div>
+  </div>
+
+  <!-- FULL LIST -->
+  <div class="card">
+    <h2>All campaigns (2024–2026)</h2>
+    <div class="controls">
+      <input type="text" id="search" placeholder="Search campaigns..." oninput="renderTable()">
+      <select id="filter-year" onchange="renderTable()">
+        <option value="">All years</option>
+        <option value="2026">2026</option>
+        <option value="2025">2025</option>
+        <option value="2024">2024</option>
+      </select>
+      <select id="filter-sort" onchange="renderTable()">
+        <option value="hits-desc">Sort: Hits (high → low)</option>
+        <option value="hits-asc">Sort: Hits (low → high)</option>
+        <option value="online-desc">Sort: Online hits (high → low)</option>
+        <option value="social-desc">Sort: Social hits (high → low)</option>
+        <option value="influencer-desc">Sort: Influencer hits (high → low)</option>
+        <option value="imps-desc">Sort: Impressions (high → low)</option>
+        <option value="name-asc">Sort: Name (A → Z)</option>
+      </select>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36px;">#</th>
+          <th>Campaign</th>
+          <th style="text-align:right">Year</th>
+          <th style="text-align:right">Total hits</th>
+          <th style="text-align:right">Online hits</th>
+          <th style="text-align:right">Social hits</th>
+          <th style="text-align:right">Influencer hits</th>
+          <th style="text-align:right">Impressions</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+    <div id="no-results" class="no-results" style="display:none;">No campaigns match your search.</div>
+  </div>
+
+</main>
+
+<script>
+// ─── DATA (sourced from 2024-2026 Top Campaign Numbers doc) ───────────────────
+// social = press social + reporter social + fan account hits (combined)
+// influencer = influencer hits
+const CAMPAIGNS = [
+  // 2026
+  { name: "TLOASG: A Spotify Experience",            year: 2025, hits: 1611, online: 737,  social: 497,  influencer: 264, imps: 7064348704  },
+  { name: "Spotify x BTS: SWIMSIDE NYC",             year: 2026, hits: 1099, online: 191,  social: 739,  influencer: 169, imps: 1823514975  },
+  { name: "Spotify House at CMA Fest",               year: 2025, hits: 1036, online: 304,  social: 478,  influencer: 498, imps: 4553847337  },
+  { name: "Billions Club Bad Bunny (post-event)",    year: 2026, hits: 1002, online: 156,  social: 759,  influencer: 26,  imps: 5682537199  },
+  { name: "BNA 2026",                                year: 2026, hits: 885,  online: null, social: null, influencer: null,imps: null        },
+  { name: "Billions Club Bad Bunny (announcement)",  year: 2026, hits: 211,  online: 67,   social: 145,  influencer: null,imps: 409384980   },
+  { name: "RapCaviar x NBC Peacock",                 year: 2026, hits: 135,  online: 6,    social: 105,  influencer: 24,  imps: 412645420   },
+  { name: "John Summit x LinkedIn",                  year: 2026, hits: 134,  online: 5,    social: 108,  influencer: 21,  imps: 47960487    },
+  { name: "Noah Kahan: The Great Divide",            year: 2026, hits: 104,  online: 7,    social: 60,   influencer: 37,  imps: 436946169   },
+
+  // 2025
+  { name: "Little Monster Press Conference",         year: 2025, hits: 324,  online: 143,  social: 161,  influencer: 20,  imps: 1973598531  },
+  { name: "2025 Songs of Summer Reveal",             year: 2025, hits: 275,  online: null, social: null, influencer: 11,  imps: 903000000   },
+  { name: "2025 Songs of Summer Predictions",        year: 2025, hits: 266,  online: 72,   social: 170,  influencer: 24,  imps: 371384408   },
+  { name: "Addison Rae Release Party",               year: 2025, hits: 207,  online: 81,   social: 126,  influencer: 47,  imps: 2000000000  },
+  { name: "Miley Cyrus x Billions Club Concert Film",year: 2025, hits: 205,  online: 93,   social: 96,   influencer: 7,   imps: 162572822   },
+  { name: "Robyn x Acne Studios",                    year: 2025, hits: 182,  online: 27,   social: 36,   influencer: 119, imps: 298863620   },
+  { name: "The Weeknd Blinding Lights 5B",           year: 2025, hits: 158,  online: 46,   social: 112,  influencer: null,imps: 335682786   },
+  { name: "Ed Sheeran Billions Club",                year: 2025, hits: 141,  online: null, social: null, influencer: null,imps: 280052670   },
+  { name: "Miley Cyrus Billions Club Live",          year: 2025, hits: 136,  online: null, social: null, influencer: null,imps: 599931701   },
+  { name: "Cardi B CDT",                             year: 2025, hits: 129,  online: 45,   social: 84,   influencer: null,imps: 191604214   },
+  { name: "CDT Clipse",                              year: 2025, hits: 122,  online: 63,   social: 59,   influencer: null,imps: 226986977   },
+  { name: "ABBA x Billions Club",                    year: 2025, hits: 62,   online: null, social: null, influencer: null,imps: 146417781   },
+  { name: "Countdown To: HAIM x Kesha",              year: 2025, hits: 54,   online: 32,   social: 22,   influencer: null,imps: 403668506   },
+  { name: "Spotify x BAPE x Central Cee",           year: 2025, hits: 54,   online: 14,   social: 40,   influencer: null,imps: 43365916    },
+  { name: "KAROL G x Billions Club: The Series",    year: 2025, hits: 46,   online: null, social: null, influencer: null,imps: 55600494    },
+  { name: "Kelly Clarkson Billions Club",            year: 2025, hits: 42,   online: null, social: null, influencer: null,imps: 174838885   },
+  { name: "Morgan Wallen Billions Club",             year: 2025, hits: 31,   online: 12,   social: 19,   influencer: null,imps: 19428356    },
+  { name: "The Come Up: Sombr",                      year: 2025, hits: 18,   online: 12,   social: 6,    influencer: null,imps: 32110640    },
+  { name: "Addison Rae Film Release",                year: 2025, hits: 7,    online: null, social: null, influencer: null,imps: 71172529    },
+  { name: "Justin Bieber Mistletoe Billions Club",   year: 2025, hits: 7,    online: null, social: null, influencer: null,imps: 115551      },
+
+  // 2024
+  { name: "The Gold Standard Exhibition",            year: 2024, hits: 172,  online: 10,   social: 62,   influencer: 100, imps: 127118581   },
+  { name: "Billions Club Live with The Weeknd",      year: 2024, hits: 158,  online: 46,   social: 112,  influencer: null,imps: 335682786   },
+  { name: "Spotify x Christina Aguilera",            year: 2024, hits: 97,   online: 78,   social: 16,   influencer: null,imps: 907058086   },
+  { name: "Ed Sheeran x Billions Club",              year: 2024, hits: 82,   online: 72,   social: 16,   influencer: null,imps: 191799099   },
+  { name: "Miley Cyrus x Billions Club: The Series", year: 2024, hits: 76,   online: 44,   social: 32,   influencer: null,imps: 246830095   },
+  { name: "Posty's Pregame",                         year: 2024, hits: 44,   online: 15,   social: 29,   influencer: 34,  imps: 198412011   },
+  { name: "Sabrina Carpenter Listening Party",       year: 2024, hits: 33,   online: 7,    social: 26,   influencer: null,imps: 80670568    },
+];
+
+// Sort by hits desc for rank calculation
+const sorted = [...CAMPAIGNS].sort((a,b) => b.hits - a.hits);
+const maxHits = sorted[0].hits;
+const top5 = sorted.slice(0, 5);
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function fmt(n, type) {
+  if (n === null || n === undefined) return '—';
+  if (type === 'imps') {
+    if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return Math.round(n/1e6) + 'M';
+    if (n >= 1e3) return Math.round(n/1e3) + 'K';
+    return n.toLocaleString();
+  }
+  return n.toLocaleString();
+}
+
+function pct(val, max) {
+  if (!val || !max) return 0;
+  return Math.min(100, Math.round((val / max) * 100));
+}
+
+// ─── TABLE ────────────────────────────────────────────────────────────────────
+function renderTable() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const yr = document.getElementById('filter-year').value;
+  const sortKey = document.getElementById('filter-sort').value;
+
+  let data = CAMPAIGNS.filter(c => {
+    const matchQ = !q || c.name.toLowerCase().includes(q);
+    const matchY = !yr || c.year.toString() === yr;
+    return matchQ && matchY;
+  });
+
+  data.sort((a,b) => {
+    if (sortKey === 'hits-desc')       return b.hits - a.hits;
+    if (sortKey === 'hits-asc')        return a.hits - b.hits;
+    if (sortKey === 'online-desc')     return (b.online || 0) - (a.online || 0);
+    if (sortKey === 'social-desc')     return (b.social || 0) - (a.social || 0);
+    if (sortKey === 'influencer-desc') return (b.influencer || 0) - (a.influencer || 0);
+    if (sortKey === 'imps-desc')       return (b.imps || 0) - (a.imps || 0);
+    if (sortKey === 'name-asc')        return a.name.localeCompare(b.name);
+    return 0;
+  });
+
+  const tbody = document.getElementById('table-body');
+  const noRes = document.getElementById('no-results');
+
+  if (data.length === 0) {
+    tbody.innerHTML = '';
+    noRes.style.display = 'block';
+    return;
+  }
+  noRes.style.display = 'none';
+
+  tbody.innerHTML = data.map((c, i) => {
+    const globalRank = sorted.findIndex(x => x.name === c.name && x.year === c.year) + 1;
+    const barW = pct(c.hits, maxHits);
+    const ratio = c.online && c.hits ? Math.round((c.online / c.hits) * 100) + '%' : '—';
+    return `<tr>
+      <td class="rank">${globalRank}</td>
+      <td class="name">
+        <div style="font-size:13px;">${c.name}</div>
+        <div class="mini-bar"><div class="mini-fill" style="width:${barW}%"></div></div>
+      </td>
+      <td class="num"><span class="tag">${c.year}</span></td>
+      <td class="num highlight">${fmt(c.hits)}</td>
+      <td class="num">${c.online ? fmt(c.online) : '—'} <span style="font-size:11px;color:var(--muted)">${c.online ? '(' + ratio + ')' : ''}</span></td>
+      <td class="num">${c.social ? fmt(c.social) : '—'}</td>
+      <td class="num">${c.influencer ? fmt(c.influencer) : '—'}</td>
+      <td class="num">${fmt(c.imps, 'imps')}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── COMPARE ──────────────────────────────────────────────────────────────────
+function runCompare() {
+  const name       = document.getElementById('inp-name').value.trim() || 'New project';
+  const hits       = parseInt(document.getElementById('inp-hits').value)       || 0;
+  const online     = parseInt(document.getElementById('inp-online').value)     || 0;
+  const social     = parseInt(document.getElementById('inp-social').value)     || 0;
+  const influencer = parseInt(document.getElementById('inp-influencer').value) || 0;
+  const imps       = parseInt(document.getElementById('inp-imps').value)       || 0;
+
+  if (!hits) { alert('Please enter at least a total hits number.'); return; }
+
+  const rank = sorted.filter(c => c.hits > hits).length + 1;
+  const total = CAMPAIGNS.length;
+  const ratio = hits > 0 && online > 0 ? Math.round((online / hits) * 100) + '%' : '—';
+  const avgRatio = Math.round(
+    CAMPAIGNS.filter(c => c.online && c.hits)
+             .reduce((a,c) => a + (c.online / c.hits), 0) /
+    CAMPAIGNS.filter(c => c.online).length * 100
+  ) + '%';
+  const top1pct = Math.round((hits / maxHits) * 100);
+
+  const avgSocial = Math.round(CAMPAIGNS.filter(c=>c.social).reduce((a,c)=>a+c.social,0) / CAMPAIGNS.filter(c=>c.social).length);
+  const avgInfluencer = Math.round(CAMPAIGNS.filter(c=>c.influencer).reduce((a,c)=>a+c.influencer,0) / CAMPAIGNS.filter(c=>c.influencer).length);
+
+  // badge
+  let badgeTxt, badgeCls;
+  if (rank <= 3)       { badgeTxt = 'Top 3 all time';     badgeCls = 'badge-above'; }
+  else if (rank <= 5)  { badgeTxt = 'Top 5 all time';     badgeCls = 'badge-above'; }
+  else if (rank <= 10) { badgeTxt = 'Top 10 all time';    badgeCls = 'badge-near';  }
+  else if (rank <= 15) { badgeTxt = 'Top 15 all time';    badgeCls = 'badge-near';  }
+  else                 { badgeTxt = `Ranked #${rank}`;    badgeCls = 'badge-below'; }
+
+  document.getElementById('res-title').textContent = name;
+  document.getElementById('res-badge').textContent = badgeTxt;
+  document.getElementById('res-badge').className = `badge ${badgeCls}`;
+  document.getElementById('res-hits').textContent       = hits.toLocaleString();
+  document.getElementById('res-hits-sub').textContent   = `${top1pct}% of all-time #1`;
+  document.getElementById('res-online').textContent     = online > 0 ? online.toLocaleString() : '—';
+  document.getElementById('res-online-sub').textContent = online > 0 ? `ratio: ${ratio} (avg ${avgRatio})` : '';
+  const socialRatio = hits > 0 && social > 0 ? Math.round((social / hits) * 100) + '%' : '—';
+  const avgSocialRatio = Math.round(CAMPAIGNS.filter(c=>c.social && c.hits).reduce((a,c)=>a+(c.social/c.hits),0) / CAMPAIGNS.filter(c=>c.social).length * 100) + '%';
+  const influencerRatio = hits > 0 && influencer > 0 ? Math.round((influencer / hits) * 100) + '%' : '—';
+  const avgInfluencerRatio = Math.round(CAMPAIGNS.filter(c=>c.influencer && c.hits).reduce((a,c)=>a+(c.influencer/c.hits),0) / CAMPAIGNS.filter(c=>c.influencer).length * 100) + '%';
+
+  document.getElementById('res-social').textContent     = social > 0 ? social.toLocaleString() : '—';
+  document.getElementById('res-social-sub').textContent = social > 0 ? `ratio: ${socialRatio} (avg ${avgSocialRatio})` : '';
+  document.getElementById('res-influencer').textContent     = influencer > 0 ? influencer.toLocaleString() : '—';
+  document.getElementById('res-influencer-sub').textContent = influencer > 0 ? `ratio: ${influencerRatio} (avg ${avgInfluencerRatio})` : '';
+  document.getElementById('res-ratio').textContent     = ratio;
+  document.getElementById('res-rank').textContent      = `#${rank}`;
+  document.getElementById('res-rank-sub').textContent  = `out of ${total} campaigns`;
+
+  // chart: top5 + new project, sorted by hits desc
+  const chartData = [...top5, { name, hits, online: online || null, social: social || null, influencer: influencer || null, imps: imps || null, isNew: true }]
+    .sort((a,b) => b.hits - a.hits);
+  const chartMax = chartData[0].hits;
+
+  document.getElementById('compare-chart').innerHTML = chartData.map(c => {
+    const w = pct(c.hits, chartMax);
+    const isNew = c.isNew;
+    return `<div class="chart-row">
+      <div class="chart-name ${isNew ? 'is-new' : ''}">${c.name}${isNew ? ' ←' : ''}</div>
+      <div class="bar-track"><div class="bar-fill ${isNew ? 'is-new' : ''}" style="width:${w}%"></div></div>
+      <div class="chart-hits">${fmt(c.hits)}</div>
+      <div class="chart-online">${c.online ? fmt(c.online) + ' online' : '—'}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('result-banner').style.display = 'block';
+  document.getElementById('result-banner').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function clearCompare() {
+  ['inp-name','inp-hits','inp-online','inp-social','inp-influencer','inp-imps'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('result-banner').style.display = 'none';
+}
+
+// init
+renderTable();
+</script>
+</body>
+</html>
