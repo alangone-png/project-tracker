@@ -438,7 +438,9 @@ function renderTable() {
   tbody.innerHTML = data.map((c, i) => {
     const globalRank = sorted.findIndex(x => x.name === c.name && x.year === c.year) + 1;
     const barW = pct(c.hits, maxHits);
-    const ratio = c.online && c.hits ? Math.round((c.online / c.hits) * 100) + '%' : '—';
+    const ratio      = c.online     && c.hits ? Math.round((c.online     / c.hits) * 100) + '%' : '';
+    const socialPct  = c.social     && c.hits ? Math.round((c.social     / c.hits) * 100) + '%' : '';
+    const inflPct    = c.influencer && c.hits ? Math.round((c.influencer / c.hits) * 100) + '%' : '';
     return `<tr>
       <td class="rank">${globalRank}</td>
       <td class="name">
@@ -447,9 +449,9 @@ function renderTable() {
       </td>
       <td class="num"><span class="tag">${c.year}</span></td>
       <td class="num highlight">${fmt(c.hits)}</td>
-      <td class="num">${c.online ? fmt(c.online) : '—'} <span style="font-size:11px;color:var(--muted)">${c.online ? '(' + ratio + ')' : ''}</span></td>
-      <td class="num">${c.social ? fmt(c.social) : '—'}</td>
-      <td class="num">${c.influencer ? fmt(c.influencer) : '—'}</td>
+      <td class="num">${c.online     ? fmt(c.online)     : '—'} <span style="font-size:11px;color:var(--muted)">${ratio     ? '(' + ratio     + ')' : ''}</span></td>
+      <td class="num">${c.social     ? fmt(c.social)     : '—'} <span style="font-size:11px;color:var(--muted)">${socialPct  ? '(' + socialPct  + ')' : ''}</span></td>
+      <td class="num">${c.influencer ? fmt(c.influencer) : '—'} <span style="font-size:11px;color:var(--muted)">${inflPct    ? '(' + inflPct    + ')' : ''}</span></td>
       <td class="num">${fmt(c.imps, 'imps')}</td>
     </tr>`;
   }).join('');
@@ -492,17 +494,17 @@ function runCompare() {
   document.getElementById('res-badge').className = `badge ${badgeCls}`;
   document.getElementById('res-hits').textContent       = hits.toLocaleString();
   document.getElementById('res-hits-sub').textContent   = `${top1pct}% of all-time #1`;
-  document.getElementById('res-online').textContent     = online > 0 ? online.toLocaleString() : '—';
-  document.getElementById('res-online-sub').textContent = online > 0 ? `ratio: ${ratio} (avg ${avgRatio})` : '';
-  const socialRatio = hits > 0 && social > 0 ? Math.round((social / hits) * 100) + '%' : '—';
-  const avgSocialRatio = Math.round(CAMPAIGNS.filter(c=>c.social && c.hits).reduce((a,c)=>a+(c.social/c.hits),0) / CAMPAIGNS.filter(c=>c.social).length * 100) + '%';
-  const influencerRatio = hits > 0 && influencer > 0 ? Math.round((influencer / hits) * 100) + '%' : '—';
+  const avgSocialRatio    = Math.round(CAMPAIGNS.filter(c=>c.social && c.hits).reduce((a,c)=>a+(c.social/c.hits),0)      / CAMPAIGNS.filter(c=>c.social).length      * 100) + '%';
   const avgInfluencerRatio = Math.round(CAMPAIGNS.filter(c=>c.influencer && c.hits).reduce((a,c)=>a+(c.influencer/c.hits),0) / CAMPAIGNS.filter(c=>c.influencer).length * 100) + '%';
+  const socialRatio     = hits > 0 && social > 0     ? Math.round((social / hits) * 100) + '%'     : null;
+  const influencerRatio = hits > 0 && influencer > 0 ? Math.round((influencer / hits) * 100) + '%' : null;
 
-  document.getElementById('res-social').textContent     = social > 0 ? social.toLocaleString() : '—';
-  document.getElementById('res-social-sub').textContent = social > 0 ? `ratio: ${socialRatio} (avg ${avgSocialRatio})` : '';
-  document.getElementById('res-influencer').textContent     = influencer > 0 ? influencer.toLocaleString() : '—';
-  document.getElementById('res-influencer-sub').textContent = influencer > 0 ? `ratio: ${influencerRatio} (avg ${avgInfluencerRatio})` : '';
+  document.getElementById('res-online').textContent      = online > 0 ? online.toLocaleString() : '—';
+  document.getElementById('res-online-sub').textContent  = online > 0 ? `ratio: ${ratio} (avg ${avgRatio})` : `avg: ${avgRatio}`;
+  document.getElementById('res-social').textContent      = social > 0 ? social.toLocaleString() : '—';
+  document.getElementById('res-social-sub').textContent  = socialRatio ? `ratio: ${socialRatio} (avg ${avgSocialRatio})` : `avg: ${avgSocialRatio}`;
+  document.getElementById('res-influencer').textContent      = influencer > 0 ? influencer.toLocaleString() : '—';
+  document.getElementById('res-influencer-sub').textContent  = influencerRatio ? `ratio: ${influencerRatio} (avg ${avgInfluencerRatio})` : `avg: ${avgInfluencerRatio}`;
   document.getElementById('res-ratio').textContent     = ratio;
   document.getElementById('res-rank').textContent      = `#${rank}`;
   document.getElementById('res-rank-sub').textContent  = `out of ${total} campaigns`;
