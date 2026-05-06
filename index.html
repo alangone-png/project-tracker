@@ -538,6 +538,74 @@
       -webkit-line-clamp: unset;
     }
 
+    /* ── Row actions ─────────────────────────── */
+    .proj-actions {
+      display: none;
+      gap: 5px;
+      margin-top: 7px;
+    }
+    .proj-row:hover .proj-actions { display: flex; }
+
+    .btn-row-action {
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 5px;
+      border: 1px solid var(--border-mid);
+      background: none;
+      cursor: pointer;
+      transition: all 0.13s;
+    }
+    .btn-row-edit  { color: var(--text-2); }
+    .btn-row-edit:hover  { color: var(--text); border-color: var(--text-2); }
+    .btn-row-delete { color: var(--red); border-color: transparent; }
+    .btn-row-delete:hover { background: var(--red-dim); border-color: rgba(229,83,75,0.35); }
+
+    /* Editing state on form */
+    .editing-banner {
+      display: none;
+      background: rgba(29,185,84,0.08);
+      border: 1px solid var(--green-border);
+      border-radius: 7px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--green);
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 8px;
+    }
+    .editing-banner.on { display: flex; }
+    .btn-cancel-edit {
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-2);
+      background: none;
+      border: 1px solid var(--border-mid);
+      border-radius: 5px;
+      padding: 3px 9px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-cancel-edit:hover { color: var(--text); }
+
+    /* Clear all button */
+    .btn-clear-all {
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      text-decoration: underline;
+      transition: color 0.13s;
+    }
+    .btn-clear-all:hover { color: var(--red); }
+
     /* ── Import button ───────────────────────── */
     .btn-import {
       font-family: inherit;
@@ -668,9 +736,9 @@
       border-radius: 5px;
       padding: 5px 6px;
       margin-bottom: 4px;
-      cursor: default;
+      cursor: pointer;
     }
-    .cal-card:hover { opacity: 0.9; }
+    .cal-card:hover { opacity: 0.85; transform: translateY(-1px); transition: transform 0.1s, opacity 0.1s; }
 
     .cal-card.ce-Erika   { background: rgba(123,79,158,0.2);  border-left: 2px solid #7B4F9E; }
     .cal-card.ce-Ivana   { background: rgba(30,110,158,0.2);  border-left: 2px solid #1E6E9E; }
@@ -738,6 +806,142 @@
     }
     .cal-tbc-row:last-child { border-bottom: none; }
 
+    /* ── Project Detail Modal ────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.on { display: flex; }
+
+    .modal {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-mid);
+      border-radius: 14px;
+      width: 460px;
+      max-width: calc(100vw - 32px);
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 28px;
+      position: relative;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--text-3);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      line-height: 1;
+      transition: color 0.15s, background 0.15s;
+    }
+    .modal-close:hover { color: var(--text); background: var(--bg-hover); }
+
+    .modal-project-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: 16px;
+      padding-right: 32px;
+    }
+
+    .modal-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+
+    .modal-detail-grid {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 10px 12px;
+      margin-bottom: 20px;
+    }
+
+    .modal-detail-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      padding-top: 1px;
+    }
+
+    .modal-detail-value {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.5;
+    }
+
+    .modal-notes {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-bottom: 22px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .modal-btn-edit {
+      flex: 1;
+      padding: 9px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-mid);
+      border-radius: 8px;
+      color: var(--text-2);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .modal-btn-edit:hover { background: var(--bg-hover); color: var(--text); }
+
+    .modal-btn-delete {
+      flex: 1;
+      padding: 9px 16px;
+      background: var(--red-dim);
+      border: 1px solid rgba(229,83,75,0.3);
+      border-radius: 8px;
+      color: var(--red);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .modal-btn-delete:hover { background: rgba(229,83,75,0.22); }
+
+    .modal-sync-indicator {
+      font-size: 11px;
+      color: var(--text-3);
+      text-align: center;
+      margin-top: 12px;
+    }
+
     /* ── Responsive ───────────────────────────── */
     @media (max-width: 760px) {
       .layout { grid-template-columns: 1fr; }
@@ -794,6 +998,11 @@
         <button class="view-btn" id="btnCal" onclick="switchView('cal')">▦ Calendar</button>
       </div>
       <div class="panel-label" id="formLabel">Add Project</div>
+
+      <div class="editing-banner" id="editingBanner">
+        <span>✏ Editing project</span>
+        <button type="button" class="btn-cancel-edit" onclick="cancelEdit()">Cancel</button>
+      </div>
 
       <form id="projectForm" onsubmit="handleSubmit(event)" novalidate>
 
@@ -865,7 +1074,10 @@
     <div class="list-panel">
       <div class="list-top">
         <div class="panel-label">All Projects</div>
-        <button class="btn-import" id="importBtn" onclick="importFromSheet()">↓ Import from Sheet</button>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="btn-clear-all" onclick="clearAllProjects()">Clear all</button>
+          <button class="btn-import" id="importBtn" onclick="importFromSheet()">↓ Import from Sheet</button>
+        </div>
       </div>
 
       <div class="retry-banner" id="retryBanner">
@@ -888,6 +1100,22 @@
     </div>
 
   </div>
+
+<!-- ─── Project Detail Modal ───────────────── -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
+    <div class="modal-project-name" id="mName"></div>
+    <div class="modal-chips" id="mChips"></div>
+    <div class="modal-detail-grid" id="mGrid"></div>
+    <div class="modal-notes" id="mNotes" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="modal-btn-edit" onclick="modalEdit()">✏ Edit</button>
+      <button class="modal-btn-delete" onclick="modalDelete()">✕ Delete</button>
+    </div>
+    <div class="modal-sync-indicator" id="mSync"></div>
+  </div>
+</div>
 
 <script>
 // ─────────────────────────────────────────────
@@ -1036,6 +1264,22 @@ async function handleSubmit(e) {
     synced:  false,
   };
 
+  if (editingId) {
+    // Update existing entry locally
+    const list = loadProjects();
+    const idx = list.findIndex(x => x.id === editingId);
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], ...project, id: editingId, synced: list[idx].synced };
+      saveProjects(list);
+    }
+    cancelEdit();
+    renderList();
+    setStatus("ok", "Entry updated locally.");
+    btn.disabled = false;
+    setTimeout(clearStatus, 4000);
+    return;
+  }
+
   addProject(project);
   renderList();
   setStatus("saving", "Saving to Google Sheets…");
@@ -1157,7 +1401,79 @@ function renderRow(p) {
     <div class="proj-name">${esc(p.project)}</div>
     <div class="proj-chips">${driChip}${teamChip}${supportChip}${unsyncChip}</div>
     ${notesHtml}
+    <div class="proj-actions">
+      <button class="btn-row-action btn-row-edit" onclick="startEdit('${esc(p.id)}')">✏ Edit</button>
+      <button class="btn-row-action btn-row-delete" onclick="deleteProject('${esc(p.id)}')">✕ Delete</button>
+    </div>
   </div>`;
+}
+
+// ─── Edit / Delete ────────────────────────────
+let editingId = null;
+
+async function deleteProject(id) {
+  if (!confirm("Delete this project?")) return;
+  const all = loadProjects();
+  const p = all.find(x => x.id === id);
+  const list = all.filter(x => x.id !== id);
+  saveProjects(list);
+  renderList();
+
+  // Sync deletion to Google Sheets
+  if (p && p.synced && APPS_SCRIPT_URL !== "PASTE_YOUR_URL_HERE") {
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", project: p.project, dri: p.dri, date: p.date }),
+      });
+    } catch {}
+  }
+}
+
+function clearAllProjects() {
+  if (!confirm("Clear all projects from this app? (This won't affect your Google Sheet.)")) return;
+  saveProjects([]);
+  renderList();
+}
+
+function startEdit(id) {
+  const p = loadProjects().find(x => x.id === id);
+  if (!p) return;
+
+  editingId = id;
+
+  // Populate form
+  document.getElementById("fProject").value  = p.project || "";
+  document.getElementById("fDri").value       = p.dri     || "";
+  document.getElementById("fTeam").value      = p.team    || "";
+  document.getElementById("fSupport").value   = p.support || "";
+  document.getElementById("fNotes").value     = p.notes   || "";
+
+  const isTBC = p.date === "TBC" || !p.date;
+  document.getElementById("fTbc").checked = isTBC;
+  document.getElementById("fDate").value    = isTBC ? "" : (p.date    || "");
+  document.getElementById("fDateEnd").value = isTBC ? "" : (p.dateEnd || "");
+  toggleTBC();
+
+  // Update UI to editing state
+  document.getElementById("editingBanner").classList.add("on");
+  document.getElementById("submitBtn").textContent = "Update Project";
+  document.getElementById("formLabel").textContent = "Edit Project";
+
+  // Scroll form into view
+  document.getElementById("projectForm").scrollIntoView({ behavior: "smooth" });
+}
+
+function cancelEdit() {
+  editingId = null;
+  document.getElementById("projectForm").reset();
+  document.getElementById("dateInputs").style.opacity = "1";
+  document.getElementById("dateInputs").style.pointerEvents = "auto";
+  document.getElementById("editingBanner").classList.remove("on");
+  document.getElementById("submitBtn").textContent = "Add Project";
+  document.getElementById("formLabel").textContent = "Add Project";
 }
 
 // ─── Import from Sheet ────────────────────────
@@ -1236,6 +1552,10 @@ function calNav(dir) {
 
 function renderCalendar() {
   const projects = loadProjects();
+  // Build global id→project map for modal lookups
+  window.__projectMap = {};
+  for (const p of projects) { window.__projectMap[p.id] = p; }
+
   const y = calYear, m = calMonth;
 
   document.getElementById("calMonthLabel").textContent = `${MO[m]} ${y}`;
@@ -1298,7 +1618,7 @@ function renderCalendar() {
         ? `<span class="cal-chip ch-${esc(p.dri)}">${esc(p.dri)}</span>` : "";
       const teamChip = p.team
         ? `<span class="cal-chip ch-${esc(p.team)}">${esc(p.team)}</span>` : "";
-      evHtml += `<div class="cal-card ${cardCls}" title="${esc(p.project)}">
+      evHtml += `<div class="cal-card ${cardCls}" title="${esc(p.project)}" onclick="openCalModal('${esc(p.id)}')">
         <div class="cal-card-name">${esc(p.project)}</div>
         <div class="cal-card-chips">${driChip}${teamChip}</div>
       </div>`;
@@ -1332,11 +1652,94 @@ function renderCalendar() {
   }
 }
 
+// ─── Calendar Modal ───────────────────────────
+let modalProjectId = null;
+
+function openCalModal(id) {
+  const p = (window.__projectMap || {})[id];
+  if (!p) return;
+  modalProjectId = id;
+
+  document.getElementById("mName").textContent = p.project || "Untitled";
+
+  // Chips
+  const driChip  = p.dri     ? `<span class="chip ch-${esc(p.dri)}">${esc(p.dri)}</span>` : "";
+  const teamChip = p.team    ? `<span class="chip ch-${esc(p.team)}">${esc(p.team)}</span>` : "";
+  const supClass = p.support === "FULL" ? "ch-FULL" : "ch-Advising";
+  const supChip  = p.support ? `<span class="chip ${supClass}">${esc(p.support)}</span>` : "";
+  document.getElementById("mChips").innerHTML = driChip + teamChip + supChip;
+
+  // Detail grid
+  const rows = [];
+  const dateStr = fmtDisplay(p.date, p.dateEnd);
+  if (dateStr) rows.push(["Date", dateStr]);
+  if (p.dri)     rows.push(["DRI", p.dri]);
+  if (p.team)    rows.push(["Team", p.team]);
+  if (p.support) rows.push(["Support", p.support]);
+  document.getElementById("mGrid").innerHTML = rows.map(([l, v]) =>
+    `<div class="modal-detail-label">${esc(l)}</div><div class="modal-detail-value">${esc(v)}</div>`
+  ).join("");
+
+  // Notes
+  const notesEl = document.getElementById("mNotes");
+  if (p.notes) {
+    notesEl.textContent = p.notes;
+    notesEl.style.display = "";
+  } else {
+    notesEl.style.display = "none";
+  }
+
+  document.getElementById("mSync").textContent = p.synced ? "" : "⚠ Not yet synced to Google Sheets";
+  document.getElementById("modalOverlay").classList.add("on");
+  document.body.style.overflow = "hidden";
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById("modalOverlay") && e.type !== "click") return;
+  if (e && e.currentTarget !== e.target && e.target.closest(".modal")) return;
+  document.getElementById("modalOverlay").classList.remove("on");
+  document.body.style.overflow = "";
+  modalProjectId = null;
+}
+
+function modalEdit() {
+  if (!modalProjectId) return;
+  closeModal();
+  startEdit(modalProjectId);
+}
+
+function modalDelete() {
+  if (!modalProjectId) return;
+  closeModal();
+  deleteProject(modalProjectId);
+}
+
 // ─── Setup toggle ─────────────────────────────
 function toggleSetup(btn) {
   const d = document.getElementById("setupDrawer");
   const on = d.classList.toggle("on");
   btn.textContent = on ? "✕ Close" : "⚙ Setup";
+}
+
+// ─── Auto-load from Google Sheets on startup ──
+async function autoLoadFromSheet() {
+  try {
+    const res = await fetch(APPS_SCRIPT_URL + "?action=import");
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.status !== "ok" || !data.projects?.length) return;
+
+    const existing = loadProjects();
+    const unsynced = existing.filter(p => !p.synced);
+    const fromSheet = data.projects;
+
+    // Keep any locally-added unsynced entries not already in the sheet
+    const sheetKeys = new Set(fromSheet.map(p => (p.project + "|" + (p.date || "")).toLowerCase()));
+    const newOnly = unsynced.filter(p => !sheetKeys.has((p.project + "|" + (p.date || "")).toLowerCase()));
+
+    saveProjects([...fromSheet, ...newOnly]);
+    renderList();
+  } catch {}
 }
 
 // ─── Init ─────────────────────────────────────
@@ -1347,8 +1750,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (APPS_SCRIPT_URL === "PASTE_YOUR_URL_HERE") {
     document.getElementById("cfgWarn").classList.add("on");
+  } else {
+    autoLoadFromSheet();
   }
   renderList();
+
+  // Close modal on Escape
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+      document.getElementById("modalOverlay").classList.remove("on");
+      document.body.style.overflow = "";
+      modalProjectId = null;
+    }
+  });
 });
 </script>
 </body>

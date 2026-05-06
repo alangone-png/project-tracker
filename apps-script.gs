@@ -143,10 +143,15 @@ function toISO(monthName, day, year) {
   return year + "-" + String(mo + 1).padStart(2, "0") + "-" + String(parseInt(day)).padStart(2, "0");
 }
 
-// Main handler — receives a new project from the web app and adds it to the sheet.
+// Main handler — receives a new project or a delete request from the web app.
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
+
+    // Handle delete action
+    if (data.action === "delete") {
+      return deleteProjectRow(data);
+    }
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = SHEET_NAME
@@ -190,6 +195,36 @@ function doPost(e) {
 
     return jsonResponse({ status: "ok", insertedAt: insertAt });
 
+  } catch (err) {
+    return jsonResponse({ status: "error", message: err.toString() });
+  }
+}
+
+// ── Delete a project row by matching project name + DRI ──────────────────────
+function deleteProjectRow(data) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = SHEET_NAME ? ss.getSheetByName(SHEET_NAME) : ss.getSheets()[0];
+    if (!sheet) return jsonResponse({ status: "error", message: "Sheet not found." });
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow === 0) return jsonResponse({ status: "ok", deleted: false });
+
+    var values = sheet.getRange(1, 1, lastRow, 2).getValues();
+    var targetProject = String(data.project || "").trim().toLowerCase();
+    var targetDri     = String(data.dri     || "").trim().toLowerCase();
+
+    for (var i = values.length - 1; i >= 0; i--) {
+      var rowProject = String(values[i][0]).trim().toLowerCase();
+      var rowDri     = String(values[i][1]).trim().toLowerCase();
+      if (rowProject === targetProject && (!targetDri || rowDri === targetDri)) {
+        sheet.deleteRow(i + 1);
+        SpreadsheetApp.flush();
+        return jsonResponse({ status: "ok", deleted: true, row: i + 1 });
+      }
+    }
+
+    return jsonResponse({ status: "ok", deleted: false });
   } catch (err) {
     return jsonResponse({ status: "error", message: err.toString() });
   }
