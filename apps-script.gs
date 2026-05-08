@@ -16,7 +16,7 @@
 // ── CONFIG ──────────────────────────────────────────────────────────────────
 // If your sheet tab has a specific name, put it here (e.g. "2026 Projects").
 // Leave as "" to use the first tab automatically.
-var SHEET_NAME = "";
+var SHEET_NAME = "2026 Project Tracker";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
