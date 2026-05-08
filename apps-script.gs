@@ -87,8 +87,18 @@ function importAllProjects() {
       // Skip rows with no project name
       if (!col1) continue;
 
-      // Parse the date cell back into ISO format
-      var dateInfo = parseDateFromSheet(col4, currentYear);
+      // Parse the date cell — could be a Date object (date-formatted cell)
+      // or a plain text string like "May 8", "TBC", "June 4-6"
+      var rawDate = row[3];
+      var dateInfo;
+      if (rawDate instanceof Date && !isNaN(rawDate.getTime())) {
+        var y  = rawDate.getFullYear();
+        var mo = String(rawDate.getMonth() + 1).padStart(2, "0");
+        var dy = String(rawDate.getDate()).padStart(2, "0");
+        dateInfo = { date: y + "-" + mo + "-" + dy, dateEnd: "" };
+      } else {
+        dateInfo = parseDateFromSheet(col4, currentYear);
+      }
 
       projects.push({
         id:      Utilities.getUuid(),
