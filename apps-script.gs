@@ -41,41 +41,54 @@ function doGet(e) {
 function importAllProjects() {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = SHEET_NAME
-      ? ss.getSheetByName(SHEET_NAME)
-      : ss.getSheets()[0];
+    var allSheets = ss.getSheets();
+    var allSheetNames = allSheets.map(function(s) { return s.getName(); });
 
-    if (!sheet) {
-      return jsonResponse({ status: "error", message: "Sheet not found." });
+    // Find the sheet: exact name → case-insensitive → first sheet
+    var sheet = null;
+    if (SHEET_NAME) {
+      sheet = ss.getSheetByName(SHEET_NAME);
+      if (!sheet) {
+        var target = SHEET_NAME.trim().toLowerCase();
+        for (var j = 0; j < allSheets.length; j++) {
+          if (allSheets[j].getName().trim().toLowerCase() === target) {
+            sheet = allSheets[j];
+            break;
+          }
+        }
+      }
     }
+    if (!sheet) sheet = allSheets[0];
 
+    var sheetUsed = sheet.getName();
     var lastRow = sheet.getLastRow();
-    if (lastRow <= 2) return jsonResponse({ status: "ok", projects: [] });
+    if (lastRow <= 2) return jsonResponse({ status: "ok", projects: [], sheetUsed: sheetUsed, allSheets: allSheetNames });
 
     // Skip rows 1–2 (merged title row + column header row)
-    var startRow = 3;
-    var numRows  = lastRow - 2;
-    var data = sheet.getRange(startRow, 1, numRows, 6).getValues();
+    var data = sheet.getRange(3, 1, lastRow - 2, 6).getValues();
     var projects = [];
     var currentYear = new Date().getFullYear();
     var monthHeaderPattern = /^([A-Z][a-z]+) (\d{4})$/;
 
     for (var i = 0; i < data.length; i++) {
       var row = data[i];
-      var col1 = String(row[0]).trim();
+      var col1 = String(row[0]).trim(); // PROJECT
+      var col4 = String(row[3]).trim(); // DATE
 
-      // Skip completely empty rows
-      if (!col1) continue;
-
-      // Check if this is a month header row (e.g. "April 2026")
-      var headerMatch = col1.match(monthHeaderPattern);
+      // Month headers can be in col A (merged cell) OR col D (date column)
+      // Check BEFORE skipping empty col A rows
+      var headerCandidate = col1 || col4;
+      var headerMatch = headerCandidate.match(monthHeaderPattern);
       if (headerMatch) {
         currentYear = parseInt(headerMatch[2]);
-        continue; // don't add to projects
+        continue;
       }
 
+      // Skip rows with no project name
+      if (!col1) continue;
+
       // Parse the date cell back into ISO format
-      var dateInfo = parseDateFromSheet(String(row[3]).trim(), currentYear);
+      var dateInfo = parseDateFromSheet(col4, currentYear);
 
       projects.push({
         id:      Utilities.getUuid(),
@@ -91,7 +104,7 @@ function importAllProjects() {
       });
     }
 
-    return jsonResponse({ status: "ok", projects: projects });
+    return jsonResponse({ status: "ok", projects: projects, sheetUsed: sheetUsed, allSheets: allSheetNames });
 
   } catch (err) {
     return jsonResponse({ status: "error", message: err.toString() });

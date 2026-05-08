@@ -1515,7 +1515,8 @@ async function importFromSheet() {
 
     btn.textContent = "↓ Import from Sheet";
     btn.disabled = false;
-    alert(`Loaded ${incoming.length} project${incoming.length !== 1 ? "s" : ""} from sheet.`);
+    const sheetUsed = data.sheetUsed ? `\nSheet: "${data.sheetUsed}"` : "";
+    alert(`Loaded ${incoming.length} project${incoming.length !== 1 ? "s" : ""} from sheet.${sheetUsed}`);
 
   } catch (err) {
     btn.textContent = "↓ Import from Sheet";
