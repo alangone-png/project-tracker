@@ -1699,19 +1699,10 @@ function renderCalendar() {
 
   document.getElementById("calGrid").innerHTML = html;
 
-  // TBC section
+  // TBC section hidden in calendar view
   const tbcEl = document.getElementById("calTBC");
-  if (tbcList.length) {
-    const rows = tbcList.map(p => {
-      const cls = p.dri ? `ce-${p.dri}` : "ce-none";
-      const driChip = p.dri ? `<span class="chip ch-${esc(p.dri)}">${esc(p.dri)}</span>` : "";
-      return `<div class="cal-tbc-row">${driChip}<span>${esc(p.project)}</span></div>`;
-    }).join("");
-    tbcEl.innerHTML = `<div class="cal-tbc">
-      <div class="cal-tbc-label">Upcoming / TBC</div>
-      <div>${rows}</div>
-    </div>`;
-  } else {
+  tbcEl.innerHTML = "";
+  if (false) {
     tbcEl.innerHTML = "";
   }
 }
