@@ -50,9 +50,12 @@ function importAllProjects() {
     }
 
     var lastRow = sheet.getLastRow();
-    if (lastRow === 0) return jsonResponse({ status: "ok", projects: [] });
+    if (lastRow <= 2) return jsonResponse({ status: "ok", projects: [] });
 
-    var data = sheet.getRange(1, 1, lastRow, 6).getValues();
+    // Skip rows 1–2 (merged title row + column header row)
+    var startRow = 3;
+    var numRows  = lastRow - 2;
+    var data = sheet.getRange(startRow, 1, numRows, 6).getValues();
     var projects = [];
     var currentYear = new Date().getFullYear();
     var monthHeaderPattern = /^([A-Z][a-z]+) (\d{4})$/;

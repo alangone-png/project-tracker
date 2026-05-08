@@ -1502,26 +1502,20 @@ async function importFromSheet() {
       return;
     }
 
-    // Merge: skip rows that look identical (same project name + date)
+    // Replace all local data with fresh data from the sheet,
+    // keeping any locally-added entries that haven't synced yet
     const existing = loadProjects();
-    const existingKeys = new Set(existing.map(p => (p.project + "|" + p.date).toLowerCase()));
+    const unsynced = existing.filter(p => !p.synced);
+    const sheetKeys = new Set(incoming.map(p => (p.project + "|" + (p.date || "")).toLowerCase()));
+    const unsyncedOnly = unsynced.filter(p => !sheetKeys.has((p.project + "|" + (p.date || "")).toLowerCase()));
 
-    let added = 0;
-    for (const p of incoming) {
-      const key = (p.project + "|" + p.date).toLowerCase();
-      if (!existingKeys.has(key)) {
-        existing.push(p);
-        added++;
-      }
-    }
-
-    saveProjects(existing);
+    saveProjects([...incoming, ...unsyncedOnly]);
     renderList();
     if (currentView === "cal") renderCalendar();
 
     btn.textContent = "↓ Import from Sheet";
     btn.disabled = false;
-    alert(`Import complete — ${added} new project${added !== 1 ? "s" : ""} added (${incoming.length - added} already existed).`);
+    alert(`Loaded ${incoming.length} project${incoming.length !== 1 ? "s" : ""} from sheet.`);
 
   } catch (err) {
     btn.textContent = "↓ Import from Sheet";
