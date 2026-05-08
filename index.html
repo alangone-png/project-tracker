@@ -527,15 +527,41 @@
       font-size: 12px;
       color: var(--text-3);
       margin-top: 5px;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      cursor: pointer;
+      line-height: 1.55;
+      word-break: break-word;
     }
-    .proj-notes.exp {
-      display: block;
-      -webkit-line-clamp: unset;
+
+    .note-link {
+      color: var(--green);
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .note-link:hover { text-decoration: underline; }
+
+    /* ── Past section ───────────────────────────── */
+    .past-section {
+      margin-top: 12px;
+      border-top: 1px dashed var(--border-mid);
+      padding-top: 8px;
+    }
+    .past-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      cursor: pointer;
+      border-radius: 8px;
+      list-style: none;
+      user-select: none;
+    }
+    .past-summary::-webkit-details-marker { display: none; }
+    .past-summary:hover { background: var(--bg-hover); }
+    .past-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
     }
 
     /* ── Row actions ─────────────────────────── */
@@ -1334,6 +1360,16 @@ function esc(s) {
     .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
+function linkify(text) {
+  return text.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
+    if (i % 2 === 1) {
+      const href = esc(part);
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="note-link">${href}</a>`;
+    }
+    return esc(part);
+  }).join("");
+}
+
 function renderList() {
   const projects = loadProjects();
   const container = document.getElementById("projectsList");
@@ -1350,25 +1386,26 @@ function renderList() {
     return;
   }
 
-  // Group
+  // Group by month
   const groups = {};
   for (const p of projects) {
     const k = monthKey(p.date);
     (groups[k] = groups[k] || []).push(p);
   }
 
-  const sortedKeys = Object.keys(groups).sort();
   const curKey = nowKey();
+  const allKeys = Object.keys(groups).sort();
 
-  container.innerHTML = sortedKeys.map(k => {
+  // Split: upcoming = current month + future + TBC; past = before current month
+  const upcomingKeys = allKeys.filter(k => k >= curKey);
+  const pastKeys     = allKeys.filter(k => k < curKey).reverse(); // most recent first
+
+  function renderMonthGroup(k, open) {
     const items = [...groups[k]].sort((a, b) => {
       if (!a.date || a.date === "TBC") return 1;
       if (!b.date || b.date === "TBC") return -1;
       return a.date.localeCompare(b.date);
     });
-    const open = k === curKey || k === sortedKeys[0];
-    const rows = items.map(renderRow).join("");
-
     return `<div class="month-group">
       <details${open ? " open" : ""}>
         <summary class="month-summary">
@@ -1378,10 +1415,30 @@ function renderList() {
           </div>
           <span class="month-chevron">▼</span>
         </summary>
-        <div class="proj-list">${rows}</div>
+        <div class="proj-list">${items.map(renderRow).join("")}</div>
       </details>
     </div>`;
-  }).join("");
+  }
+
+  let html = upcomingKeys.map(k => renderMonthGroup(k, k === curKey)).join("");
+
+  if (pastKeys.length) {
+    const pastCount = pastKeys.reduce((n, k) => n + groups[k].length, 0);
+    html += `<div class="past-section">
+      <details>
+        <summary class="past-summary">
+          <div class="month-label-wrap">
+            <span class="past-label">Past</span>
+            <span class="month-pill">${pastCount}</span>
+          </div>
+          <span class="month-chevron">▼</span>
+        </summary>
+        <div>${pastKeys.map(k => renderMonthGroup(k, false)).join("")}</div>
+      </details>
+    </div>`;
+  }
+
+  container.innerHTML = html;
 }
 
 function renderRow(p) {
@@ -1392,8 +1449,8 @@ function renderRow(p) {
   const supClass    = p.support === "FULL" ? "ch-FULL" : "ch-Advising";
   const supportChip = p.support ? `<span class="chip ${supClass}">${esc(p.support)}</span>` : "";
   const unsyncChip  = !p.synced ? `<span class="chip ch-unsynced">Unsynced</span>` : "";
-  const notesHtml   = p.notes
-    ? `<div class="proj-notes" onclick="this.classList.toggle('exp')" title="Click to expand">${esc(p.notes)}</div>`
+  const notesHtml = p.notes
+    ? `<div class="proj-notes">${linkify(p.notes)}</div>`
     : "";
 
   return `<div class="proj-row">
@@ -1686,7 +1743,7 @@ function openCalModal(id) {
   // Notes
   const notesEl = document.getElementById("mNotes");
   if (p.notes) {
-    notesEl.textContent = p.notes;
+    notesEl.innerHTML = linkify(p.notes);
     notesEl.style.display = "";
   } else {
     notesEl.style.display = "none";
