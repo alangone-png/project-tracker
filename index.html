@@ -1489,16 +1489,25 @@ async function importFromSheet() {
 
   try {
     const res = await fetch(APPS_SCRIPT_URL + "?action=import");
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
+    // Parse as text first so we can show the raw response if it's not JSON
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("Script returned non-JSON. Raw response:\n\n" + text.substring(0, 500));
+    }
 
     if (data.status === "error") throw new Error(data.message);
 
     const incoming = data.projects || [];
+    const sheetUsed = data.sheetUsed || "unknown";
+    const allSheets = data.allSheets ? data.allSheets.join(", ") : "";
+
     if (!incoming.length) {
       btn.textContent = "↓ Import from Sheet";
       btn.disabled = false;
-      alert("No projects found in the sheet.");
+      alert(`No projects found.\nSheet read: "${sheetUsed}"\nAll tabs: ${allSheets}`);
       return;
     }
 
@@ -1515,13 +1524,12 @@ async function importFromSheet() {
 
     btn.textContent = "↓ Import from Sheet";
     btn.disabled = false;
-    const sheetUsed = data.sheetUsed ? `\nSheet: "${data.sheetUsed}"` : "";
-    alert(`Loaded ${incoming.length} project${incoming.length !== 1 ? "s" : ""} from sheet.${sheetUsed}`);
+    alert(`Loaded ${incoming.length} project${incoming.length !== 1 ? "s" : ""}.\nSheet read: "${sheetUsed}"\nAll tabs: ${allSheets}`);
 
   } catch (err) {
     btn.textContent = "↓ Import from Sheet";
     btn.disabled = false;
-    alert("Import failed: " + err.message + "\n\nMake sure you've re-deployed the Apps Script after the latest update (Deploy → Manage deployments → update).");
+    alert("Import failed:\n\n" + err.message);
   }
 }
 
