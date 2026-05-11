@@ -293,7 +293,10 @@
 
   <!-- FULL LIST -->
   <div class="card">
-    <h2>All campaigns (2024–2026)</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <h2 style="margin-bottom:0">All campaigns (2024–2026)</h2>
+      <button id="refreshBtn" onclick="loadFromSheet()" style="font-size:12px;padding:6px 14px;background:#1DB954;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:500;">↻ Refresh</button>
+    </div>
     <div class="controls">
       <input type="text" id="search" placeholder="Search campaigns..." oninput="renderTable()">
       <select id="filter-year" onchange="renderTable()">
@@ -333,10 +336,14 @@
 </main>
 
 <script>
-// ─── DATA (sourced from 2024-2026 Top Campaign Numbers doc) ───────────────────
+// ─── SHEET CONNECTION ─────────────────────────────────────────────────────────
+// Paste your Apps Script URL here after deploying apps-script-campaigns.gs
+const CAMPAIGNS_SCRIPT_URL = "PASTE_CAMPAIGNS_SCRIPT_URL_HERE";
+
+// ─── DATA (fallback — also merges with live sheet data on load) ───────────────
 // social = press social + reporter social + fan account hits (combined)
 // influencer = influencer hits
-const CAMPAIGNS = [
+let CAMPAIGNS = [
   // 2026
   { name: "TLOASG: A Spotify Experience",            year: 2025, hits: 1611, online: 737,  social: 497,  influencer: 264, imps: 7064348704  },
   { name: "Spotify x BTS: SWIMSIDE NYC",             year: 2026, hits: 1099, online: 191,  social: 739,  influencer: 169, imps: 1823514975  },
@@ -382,10 +389,36 @@ const CAMPAIGNS = [
   { name: "Sabrina Carpenter Listening Party",       year: 2024, hits: 33,   online: 7,    social: 26,   influencer: null,imps: 80670568    },
 ];
 
-// Sort by hits desc for rank calculation
-const sorted = [...CAMPAIGNS].sort((a,b) => b.hits - a.hits);
-const maxHits = sorted[0].hits;
-const top5 = sorted.slice(0, 5);
+// ─── Derived globals (recalculated after sheet load) ─────────────────────────
+let sorted, maxHits, top5;
+
+function initCampaigns() {
+  sorted  = [...CAMPAIGNS].sort((a,b) => b.hits - a.hits);
+  maxHits = sorted[0]?.hits || 1;
+  top5    = sorted.slice(0, 5);
+  renderTable();
+}
+
+// ─── Load from Google Sheet ───────────────────────────────────────────────────
+async function loadFromSheet() {
+  if (CAMPAIGNS_SCRIPT_URL === "PASTE_CAMPAIGNS_SCRIPT_URL_HERE") return;
+  try {
+    const res  = await fetch(CAMPAIGNS_SCRIPT_URL + "?action=import");
+    const text = await res.text();
+    const data = JSON.parse(text);
+    if (data.status !== "ok" || !data.campaigns?.length) return;
+
+    // Merge: sheet campaigns replace/supplement the hardcoded list
+    const sheetNames = new Set(data.campaigns.map(c => c.name.toLowerCase()));
+    const kept = CAMPAIGNS.filter(c => !sheetNames.has(c.name.toLowerCase()));
+    CAMPAIGNS = [...kept, ...data.campaigns];
+    initCampaigns();
+
+    const btn = document.getElementById("refreshBtn");
+    if (btn) btn.textContent = "✓ Up to date";
+    setTimeout(() => { if (btn) btn.textContent = "↻ Refresh"; }, 3000);
+  } catch {}
+}
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function fmt(n, type) {
@@ -536,8 +569,9 @@ function clearCompare() {
   document.getElementById('result-banner').style.display = 'none';
 }
 
-// init
-renderTable();
+// ─── Init ─────────────────────────────────────────────────────────────────────
+initCampaigns();
+loadFromSheet();
 </script>
 </body>
 </html>
