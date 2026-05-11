@@ -408,9 +408,10 @@ async function loadFromSheet() {
     const data = JSON.parse(text);
     if (data.status !== "ok" || !data.campaigns?.length) return;
 
-    // Merge: sheet campaigns replace/supplement the hardcoded list
-    const sheetNames = new Set(data.campaigns.map(c => c.name.toLowerCase()));
-    const kept = CAMPAIGNS.filter(c => !sheetNames.has(c.name.toLowerCase()));
+    // Merge: drop hardcoded entries for any year present in sheet data,
+    // then add all sheet campaigns (avoids duplicates from name mismatches)
+    const sheetYears = new Set(data.campaigns.map(c => c.year));
+    const kept = CAMPAIGNS.filter(c => !sheetYears.has(c.year));
     CAMPAIGNS = [...kept, ...data.campaigns];
     initCampaigns();
 
